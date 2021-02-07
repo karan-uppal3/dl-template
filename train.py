@@ -14,6 +14,7 @@ import scipy.io as sio
 from evaluate import evaulate
 from torch.utils import data
 from utils.save import save_ckp, load_ckp
+import wandb
 
 IMG_MEAN = np.array((104.00698793, 116.66876762,
                      122.67891434), dtype=np.float32)
@@ -22,6 +23,8 @@ CS_weights = np.array((1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
                        1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0), dtype=np.float32)
 CS_weights = torch.from_numpy(CS_weights)
 
+wandb.login(key="8836a9cd165e3f15e80fb49e2bc9362a6bb63bb7")
+wandb.init(project="DL-SegSem")   #, resume='allow', id='')
 
 def main():
 
@@ -55,7 +58,8 @@ def main():
 
     model.train()
     model.cuda()
-
+    wandb.watch(model,log='gradient',log_freq=1)
+    
     valid_loss_min = np.Inf
 
     _t['iter time'].tic()
@@ -102,6 +106,8 @@ def main():
 
         save_ckp(checkpoint, False, args.checkpoint_path, args.best_model_path)
 
+        wandb.log({"Training Loss": epoch_loss/len(train_loader), "Validation Loss": val_loss, "Mean IoU": val_data['Mean IOU']})
+        
         if val_loss <= valid_loss_min:
             print('Validation loss decreased ({:.6f} --> {:.6f}).  Saving model ...'.format(
                 valid_loss_min, val_loss))
