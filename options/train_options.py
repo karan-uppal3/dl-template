@@ -7,7 +7,8 @@ class TrainOptions():
         parser = argparse.ArgumentParser(description="training script for FDA")
         parser.add_argument("--model", type=str, default='enet',
                             help="available options : enet")
-        parser.add_argument("--GPU", type=str, default='0', help="which GPU to use")
+        parser.add_argument("--GPU", type=str, default='0',
+                            help="which GPU to use")
         parser.add_argument("--data-dir", type=str, default='../data_semseg',
                             help="Path to the directory containing the dataset.")
         parser.add_argument("--set", type=str, default='train',
@@ -32,6 +33,10 @@ class TrainOptions():
                             default='./checkpoint/current_checkpoint.pt', help="Path to previous checkpoint.")
         parser.add_argument("--best_model_path", type=str,
                             default='./best_model/best_model.pt', help="Path to best checkpoint.")
+        parser.add_argument("--wandb_key", type=str,
+                            default='8836a9cd165e3f15e80fb49e2bc9362a6bb63bb7', help="Wandb api key")
+        parser.add_argument("--wandb_id", type=str,
+                            default=None, help="Wandb run resume id")
 
         return parser.parse_args()
 
