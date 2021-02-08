@@ -23,8 +23,6 @@ class TrainOptions():
                             help="Regularisation parameter for L2-loss.")
         parser.add_argument("--num-classes", type=int, default=19,
                             help="Number of classes for cityscapes.")
-        parser.add_argument("--init-weights", type=str,
-                            default=None, help="initial model.")
         parser.add_argument("--print-freq", type=int,
                             default=1, help="print loss and time fequency.")
         parser.add_argument("--restore", type=bool,
