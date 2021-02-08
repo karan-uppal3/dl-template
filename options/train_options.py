@@ -34,7 +34,7 @@ class TrainOptions():
         parser.add_argument("--wandb_key", type=str,
                             default='8836a9cd165e3f15e80fb49e2bc9362a6bb63bb7', help="Wandb api key")
         parser.add_argument("--wandb_id", type=str,
-                            default=None, help="Wandb run resume id")
+                            default=None, help="Wandb run resume id (valid only if restore=True")
 
         return parser.parse_args()
 
