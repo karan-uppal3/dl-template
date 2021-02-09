@@ -2,9 +2,10 @@ import os
 import torch
 import numpy as np
 import scipy.misc as m
-from PIL import Image 
+from PIL import Image
 from torch.utils import data
 import cv2
+
 
 def recursive_glob(rootdir=".", suffix=""):
     """Performs recursive glob with given suffix and rootdir
@@ -17,6 +18,7 @@ def recursive_glob(rootdir=".", suffix=""):
         for filename in filenames
         if filename.endswith(suffix)
     ]
+
 
 class cityscapesLoader(data.Dataset):
     """cityscapesLoader
@@ -162,7 +164,7 @@ class cityscapesLoader(data.Dataset):
         )
 
         img = cv2.imread(img_path)
-        lbl = cv2.imread(lbl_path,0)
+        lbl = cv2.imread(lbl_path, 0)
 
         if self.augmentations is not None:
             img, lbl = self.augmentations(img, lbl)
@@ -178,8 +180,8 @@ class cityscapesLoader(data.Dataset):
         :param lbl:
         """
         img = cv2.resize(
-            img,(self.img_size[0], self.img_size[1]), interpolation = cv2.INTER_CUBIC)  # uint8 with RGB mode
-        img = np.asarray( img, np.float64 )
+            img, (self.img_size[0], self.img_size[1]), interpolation=cv2.INTER_CUBIC)  # uint8 with RGB mode
+        img = np.asarray(img, np.float64)
         img -= self.mean
         if self.img_norm:
             # Resize scales images from 0 to 255, thus we need
@@ -187,10 +189,10 @@ class cityscapesLoader(data.Dataset):
             img = img.astype(float) / 255.0
         # NHWC -> NCHW
         img = img.transpose(2, 0, 1)
-        
+
         lbl = cv2.resize(
-            lbl,(self.img_size[0], self.img_size[1]), interpolation = cv2.INTER_NEAREST)
-        lbl = np.asarray( lbl, int )
+            lbl, (self.img_size[0], self.img_size[1]), interpolation=cv2.INTER_NEAREST)
+        lbl = np.asarray(lbl, int)
         lbl = self.encode_segmap(np.array(lbl, dtype=np.uint8))
 
         classes = np.unique(lbl)

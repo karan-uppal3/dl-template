@@ -54,7 +54,6 @@ def main():
         model, optim, start_iter, valid_loss_min = load_ckp(
             args.checkpoint_path, model, optim)
         wandb.init(project="DL-SegSem", resume='allow', id=args.wandb_id)
-        start_iter += 1
 
     else:
         wandb.init(project="DL-SegSem")
@@ -67,7 +66,7 @@ def main():
 
     _t['iter time'].tic()
 
-    for epoch in range(start_iter, args.epochs):
+    for epoch in range(start_iter+1, args.epochs):
 
         epoch_loss = 0.0
 

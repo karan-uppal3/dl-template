@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
-from utils.metrics import RunningScore
 import numpy as np
+
 
 def to_device(data, device):
     """
@@ -12,10 +12,32 @@ def to_device(data, device):
     return data.to(device, non_blocking=True)
 
 
+def get_confusion_matrix(gt_label, pred_label, class_num):
+    """
+    Calcute the confusion matrix by given label and pred
+    :param gt_label: the ground truth label
+    :param pred_label: the pred label
+    :param class_num: the nunber of class
+    :return: the confusion matrix
+    """
+    index = (gt_label * class_num + pred_label).astype('int32')
+    label_count = np.bincount(index)
+    confusion_matrix = np.zeros((class_num, class_num))
+
+    for i_label in range(class_num):
+        for i_pred_label in range(class_num):
+            cur_index = i_label * class_num + i_pred_label
+            if cur_index < len(label_count):
+                confusion_matrix[i_label,
+                                 i_pred_label] = label_count[cur_index]
+
+    return confusion_matrix
+
+
 def evaulate(model, data_loader, n_classes=19, criterion=nn.CrossEntropyLoss(ignore_index=255)):
 
-    score = RunningScore(n_classes=n_classes)
     epoch_loss = 0.0
+    confusion_matrix = np.zeros((n_classes, n_classes))
 
     for img, label in data_loader:
 
@@ -33,10 +55,18 @@ def evaulate(model, data_loader, n_classes=19, criterion=nn.CrossEntropyLoss(ign
         preds = np.array(pred.cpu())
         label = np.array(label.cpu())
 
-        score.update(label, preds)
+        ignore_index = label != 255
+        label = label[ignore_index]
+        preds = preds[ignore_index]
+        confusion_matrix += get_confusion_matrix(label, preds, n_classes)
 
-    metrics = score.get_scores()
+    pos = confusion_matrix.sum(1)
+    res = confusion_matrix.sum(0)
+    tp = np.diag(confusion_matrix)
 
-    print("mIOU = ", metrics[0]['Mean_IoU'],"Accuracy =", metrics[0]['Overall_Acc'])
+    IU_array = (tp / np.maximum(1.0, pos + res - tp))
+    mean_IU = IU_array.mean()
 
-    return {"Mean IOU": metrics[0]['Mean_IoU'], "Accuracy": metrics[0]['Overall_Acc'], "Loss": epoch_loss/len(data_loader)}
+    #print({'meanIU':mean_IU, 'IU_array':IU_array})
+
+    return {"Mean IOU": mean_IU, "Loss": epoch_loss/len(data_loader), "IoU": IU_array}
