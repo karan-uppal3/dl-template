@@ -103,7 +103,7 @@ def main():
 
         checkpoint = {
             'epoch': epoch,
-            'valid_loss_min': val_loss_min,
+            'valid_loss_min': valid_loss_min,
             'state_dict': model.state_dict(),
             'optimizer': optim.state_dict(),
         }
