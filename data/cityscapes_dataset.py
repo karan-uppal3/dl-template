@@ -5,8 +5,44 @@ import scipy.misc as m
 from PIL import Image
 from torch.utils import data
 import cv2
+import torchvision.transforms as transforms
+from torch.utils.data import Dataset, DataLoader
 
+transform_img = transforms.Compose([
+  transforms.ToTensor(),
+  transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+  ])
 
+class dataset(Dataset):
+  def __init__(self, images_X, images_Y, transform_img):
+    self.data=images_X
+    self.labels=images_Y
+    self.transform=transform_img
+
+  def __len__(self):
+    return len(self.data)
+
+  def __getitem__(self, index):
+    x = self.data[index]
+    y = self.labels[index]
+    x = self.transform(x)
+    return x, y
+
+def cityscapesLoader(root,split='train',is_transform=True):
+
+  if split == 'train':
+    images_X = np.load(root+"/images_X_256.npy")
+    images_Y = np.load(root+"/images_Y_256.npy")
+    train_data = dataset(images_X=images_X, images_Y=images_Y, transform_img=transform_img)
+    return train_data
+
+  elif split == 'val':
+    val_X = np.load(root+"/val_X_256.npy")
+    val_Y = np.load(root+"/val_Y_256.npy")
+    val_data = dataset(images_X=val_X, images_Y=val_Y, transform_img=transform_img)
+    return val_data
+
+'''
 def recursive_glob(rootdir=".", suffix=""):
     """Performs recursive glob with given suffix and rootdir
         :param rootdir is the root directory
@@ -261,3 +297,4 @@ if __name__ == "__main__":
             break
         else:
             plt.close()
+'''
