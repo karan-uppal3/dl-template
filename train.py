@@ -110,8 +110,12 @@ def main():
 
         save_ckp(checkpoint, False, args.checkpoint_path, args.best_model_path)
 
-        wandb.log({"Training Loss": epoch_loss/len(train_loader),
-                   "Validation Loss": val_loss, "Mean IoU": val_data['Mean IOU']})
+        wandb.log({
+            "Training Loss": epoch_loss/len(train_loader),
+            "Validation Loss": val_loss,
+            "Mean IoU": val_data['Mean IOU'],
+            "Predictions": val_data['Predictions']
+        })
 
         if val_loss <= valid_loss_min:
             print('Validation loss decreased ({:.6f} --> {:.6f}).  Saving model ...'.format(

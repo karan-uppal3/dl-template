@@ -1,6 +1,29 @@
 import torch
 import torch.nn as nn
 import numpy as np
+import wandb
+
+segmentation_classes = [
+    'road', 'sidewalk', 'building', 'wall', 'fence', 'pole', 'traffic light',
+    'traffic sign', 'vegetation', 'terrain', 'sky', 'person', 'rider', 'car',
+    'truck', 'bus', 'train', 'motorcycle', 'bicycle', 'void'
+]
+
+
+def labels():
+    l = {}
+    for i, label in enumerate(segmentation_classes):
+        l[i] = label
+    return l
+
+
+def wb_mask(bg_img, pred_mask, true_mask):
+    """
+    Util function for generating interactive image mask from components
+    """
+    return wandb.Image(bg_img, masks={
+        "prediction": {"mask_data": pred_mask, "class_labels": labels()},
+        "ground truth": {"mask_data": true_mask, "class_labels": labels()}})
 
 
 def to_device(data, device):
@@ -38,6 +61,8 @@ def evaulate(model, data_loader, n_classes=19, criterion=nn.CrossEntropyLoss(ign
 
     epoch_loss = 0.0
     confusion_matrix = np.zeros((n_classes, n_classes))
+    k = 0
+    mask_list = []
 
     for img, label in data_loader:
 
@@ -46,7 +71,7 @@ def evaulate(model, data_loader, n_classes=19, criterion=nn.CrossEntropyLoss(ign
         xb = to_device(img, 'cuda')
         yb = model(xb)
 
-        loss = criterion(yb, to_device(label, 'cuda'))
+        loss = criterion(yb, to_device(label.long(), 'cuda'))
         epoch_loss += loss.item()
 
         pred = nn.functional.softmax(yb, dim=1)
@@ -54,6 +79,10 @@ def evaulate(model, data_loader, n_classes=19, criterion=nn.CrossEntropyLoss(ign
 
         preds = np.array(pred.cpu())
         label = np.array(label.cpu())
+
+        if k < 5:
+            pred_img, gt_img = preds.copy(), label.copy()
+            mask_list.append(wb_mask(img.cpu(), pred_img, gt_img))
 
         ignore_index = label != 255
         label = label[ignore_index]
@@ -69,4 +98,4 @@ def evaulate(model, data_loader, n_classes=19, criterion=nn.CrossEntropyLoss(ign
 
     #print({'meanIU':mean_IU, 'IU_array':IU_array})
 
-    return {"Mean IOU": mean_IU, "Loss": epoch_loss/len(data_loader), "IoU": IU_array}
+    return {"Mean IOU": mean_IU, "Loss": epoch_loss/len(data_loader), "IoU": IU_array, "Predictions": mask_list}
