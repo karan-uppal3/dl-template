@@ -81,8 +81,9 @@ def evaulate(model, data_loader, n_classes=19, criterion=nn.CrossEntropyLoss(ign
         label = np.array(label.cpu())
 
         if k < 5:
-            pred_img, gt_img = preds.copy(), label.copy()
+            pred_img, gt_img = preds.copy()[0], label.copy()[0]
             mask_list.append(wb_mask(img.cpu(), pred_img, gt_img))
+            k += 1
 
         ignore_index = label != 255
         label = label[ignore_index]
