@@ -57,6 +57,8 @@ def main():
 
     else:
         wandb.init(project="DL-SegSem")
+        
+    wandb.config.update(args)
 
     cudnn.enabled = True
     cudnn.benchmark = True
