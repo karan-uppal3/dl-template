@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 import wandb
+from utils.metrics import RunningScore
 
 segmentation_classes = [
     'road', 'sidewalk', 'building', 'wall', 'fence', 'pole', 'traffic light',
@@ -56,11 +57,10 @@ def get_confusion_matrix(gt_label, pred_label, class_num):
 
     return confusion_matrix
 
-
 def evaulate(model, data_loader, n_classes=19, criterion=nn.CrossEntropyLoss(ignore_index=255)):
 
+    score = RunningScore(n_classes=n_classes)
     epoch_loss = 0.0
-    confusion_matrix = np.zeros((n_classes, n_classes))
     k = 0
     mask_list = []
 
@@ -81,22 +81,14 @@ def evaulate(model, data_loader, n_classes=19, criterion=nn.CrossEntropyLoss(ign
         label = np.array(label.cpu())
 
         if k < 5:
-            pred_img, gt_img = preds.copy()[0], label.copy()[0]
-            mask_list.append(wb_mask(img.cpu(), pred_img, gt_img))
-            k += 1
+          pred_img, gt_img = preds.copy()[0], label.copy()[0]
+          mask_list.append(wb_mask(img.cpu(), pred_img, gt_img))
+          k += 1
 
-        ignore_index = label != 255
-        label = label[ignore_index]
-        preds = preds[ignore_index]
-        confusion_matrix += get_confusion_matrix(label, preds, n_classes)
+        score.update(label, preds)
 
-    pos = confusion_matrix.sum(1)
-    res = confusion_matrix.sum(0)
-    tp = np.diag(confusion_matrix)
+    metrics = score.get_scores()
 
-    IU_array = (tp / np.maximum(1.0, pos + res - tp))
-    mean_IU = IU_array.mean()
+    #print("mIOU = ", metrics[0]['Mean_IoU'],"Accuracy =", metrics[0]['Overall_Acc'])
 
-    #print({'meanIU':mean_IU, 'IU_array':IU_array})
-
-    return {"Mean IOU": mean_IU, "Loss": epoch_loss/len(data_loader), "IoU": IU_array, "Predictions": mask_list}
+    return {"Mean IOU": metrics[0]['Mean_IoU'], "Accuracy": metrics[0]['Overall_Acc'], "Loss": epoch_loss/len(data_loader), "Predictions": mask_list}
